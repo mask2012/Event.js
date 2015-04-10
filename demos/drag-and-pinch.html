@@ -1,0 +1,199 @@
+<!doctype html>
+<head>
+  <meta name="viewport" content="minimum-scale=1.0,maximum-scale=1.0,initial-scale=1.0,user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+</head>
+<style>
+  html, body {
+  	font-family: arial;
+  	margin: 0;
+  	padding: 0;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+  }
+  div#container {
+  	position: absolute; right: 0; background: #000; color: #fff; z-index: 1; padding-bottom: 0.5em; display: none;
+  	width: 120px;
+  }
+  div#container span {
+  	padding-left: 5px;
+  }
+  div.header {
+	background: #ff0; color: #000; padding: 0.5em; margin-bottom: 0.25em;
+  }
+  #test {
+    background: green;
+    font-size: 15px;
+    min-height: 50px;
+    -ms-word-break: break-all;
+    word-break: break-all;
+    margin: 0 auto 20px;
+    overflow-y: auto;
+    color: white;
+    -ms-touch-action: none;
+    padding: 20px 10px;
+  }
+  li {
+  	list-style-type: square;
+  	padding: 0.15em 0.5em;
+  }
+  #img{width: 50%; margin: 20px auto; position: relative;}
+  #img img{width: 100%; height: auto;}
+</style>
+<body id="body">
+<div id="container">
+	<div class="header">Gestures</div>
+</div>
+<div id="test"></div>
+<div id="img"><img src="https://ss1.baidu.com/-4o3dSag_xI4khGko9WTAnF6hhy/super/whfpf%3D425%2C260%2C50/sign=a7050c3532d12f2ece50fd2029ffe150/54fbb2fb43166d2293a37876422309f79152d278.jpg" alt=""></div>
+
+
+
+<button id="button-a">a</button>
+<h1>play it in mobile and you can drag, pinch and spread</h1>
+
+<!-- Pointer events library. -->
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script src="../js/Event.js"></script>
+<script src="./inc/MagicTouch.js"></script>
+<script>
+
+var endParas={Rotate:0,Scale:1,X:0,Y:0};
+var startParas={X:0,Y:0}
+var canDrag=true;
+
+var gestures = { // listeners for various event types.
+	gesture: function (event) { // fingers, minFingers, maxFingers
+		log(event, "gesture", "identifier", "state", "fingers", "rotation", "scale");
+		// log(event, "rotation", "scale");
+		
+		if(event.state=='start'){
+			canDrag=false;
+		}else if(event.state=='end'){
+			endParas.Scale=endParas.Scale*event.scale;
+			endParas.Rotate=endParas.Rotate+event.rotation;
+			setTimeout(function(){
+				canDrag=true;
+			}, 100)
+		}else if(event.state=='change'){
+			var a=endParas.Scale*event.scale;
+			var b=endParas.Rotate+event.rotation;
+			// write( endParas.X );
+			$('#img').css({
+				'-webkit-transform': 'scale('+a+') rotate('+b+'deg)',
+				'left': (endParas.X)+'px',
+				'top': (endParas.Y)+'px'
+			});
+		}
+
+	},
+	// click: function (event) { 
+	// 	if (!event.gesture) return; //- figure out how to override native events entirely
+	// 	log(event, "gesture", "identifier", "state", "x", "y");
+	// }
+	// dbltap: function (event) { // fingers, minFingers, maxFingers
+	// 	if (!event.gesture) return; //- figure out how to override native events entirely
+	// 	log(event, "gesture", "identifier", "state", "x", "y");
+	// },
+	// swipe: function (event) { // fingers, minFingers, maxFingers, snap, threshold
+	// 	// log(event, "gesture", "identifier", "state", "fingers", "velocity", "angle");
+	// 	log(event,  "fingers", "velocity", "angle");
+	// }
+	// tap: function (event) { // fingers, minFingers, maxFingers, timeout.
+	// 	log(event, "gesture", "identifier", "state", "fingers", "x", "y");
+	// },
+	// longpress: function (event) { // fingers, minFingers, maxFingers, delay.
+	// 	// log(event, "gesture", "identifier", "state", "fingers", "x", "y");
+	// 	log(event, "state", "fingers", "x", "y");
+	// },
+	// shake: function (event) {
+	// 	log(event, "gesture", "identifier", "state");
+	// },
+	drag: function (event) { // fingers, maxFingers, position
+		log(event, "gesture", "identifier", "state", "fingers", "state", "x", "y");
+		// log(event, "state", "fingers", "state", "x", "y");
+		// write( event.x );
+		
+		if(canDrag){
+			if(event.fingers==1&&event.state=='down'){
+				startParas.X=event.x;
+				startParas.Y=event.y;
+			}else if(event.fingers==1&&event.state=='up'){
+					endParas.X+=event.x-startParas.X;
+					endParas.Y+=event.y-startParas.Y;
+			}else if(event.fingers==1&&event.state=='move'){
+				$('#img').css({
+					'-webkit-transform': 'scale('+endParas.Scale+') rotate('+endParas.Rotate+'deg)',
+					'left': (endParas.X+event.x-startParas.X)+'px',
+					'top': (endParas.Y+event.y-startParas.Y)+'px'
+				});
+			}
+		}
+	}
+
+};
+
+function log(e) {
+	var text = "";
+	for (var n = 1, length = arguments.length; n < length; n++) {
+		text += arguments[n] + "(" + String(e[arguments[n]]).toUpperCase() + ")";
+	}
+	test.innerHTML = text
+};
+
+function write(txt) {
+	test.innerHTML = txt
+};
+
+window.onload = function () {
+	/// this is an example of running with augmented listeners
+	eventjs.configure({
+		modifySelectors: true,
+		modifyEventListener: true
+	});
+	///
+//	magictouch(false);
+	///
+	// var container = document.querySelector("#container");
+	// var test = document.querySelector('#test');
+	// for (var key in gestures) {
+	// 	var input = document.createElement("input");
+	// 	input.value = key;
+	// 	input.type = "checkbox";
+	// 	input.checked = true;
+	// 	input.onchange = function() {
+	// 		if (this.checked) {
+	// 			test.addEventListener(this.value, gestures[this.value]);
+	// 		} else {
+	// 			test.removeEventListener(this.value, gestures[this.value]);
+	// 		}
+	// 	};
+	// 	var span = document.createElement("span");
+	// 	span.innerHTML = key;
+	// 	var div = document.createElement("div");
+	// 	div.appendChild(input);
+	// 	div.appendChild(span);
+	// 	container.appendChild(div);
+	// 	/// this event is using eventjs
+	// 	test.addEventListener(key, gestures[key]);
+	// }
+
+	var body = document.querySelector('#body');
+	body.addEventListener('gesture', gestures['gesture']);
+	body.addEventListener('drag', gestures['drag']);
+
+	document.querySelector('#button-a').addEventListener('click', function(){
+		alert('a');
+	});
+
+
+
+	/// these events are using eventjs
+	// window.addEventListener("contextmenu", eventjs.prevent)
+	document.addEventListener("touchstart", eventjs.prevent)
+};
+
+</script>
+</body>
